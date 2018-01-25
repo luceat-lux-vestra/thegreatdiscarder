@@ -1,3 +1,15 @@
+## The Great Discarder + Lazy tab
+### Caveats
+>This may not meet your usage pattern/scenario.  
+### Cautions!!!
+> `Vivaldi` works differently, URL is setted in `loading` status unlike `Chrome`(**onUpdated events to be notified when a URL is set**).
+> Read this official [docs](https://developer.chrome.com/extensions/tabs#event-onCreated)
+
+### Changes
+>Lazy load on startup : https://github.com/Jman/lazy_tab  
+>Lazy load on new tab which opened from link  
+>Preload next n tab which opened from link defined as `LAZY_LOAD_TAB_THRESHOLDS`(default: 1)  
+
 # <img src="/src/img/icon48.png" align="absmiddle"> The Great Discarder
 
 "The Great Discarder" is a clone of my other open source chrome extension "The Great Suspender". It was built to take advantage of Google's new 'tab discarding' functionality which is essentially a native implementation of tab suspension.

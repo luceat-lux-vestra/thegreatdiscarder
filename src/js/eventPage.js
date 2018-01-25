@@ -9,14 +9,37 @@
 
 'use strict';
 
+// https://github.com/Jman/lazy_tab
+!(function(tabs){
+
+  "use strict";
+
+  const specialUrls =/chrome-extension:|chrome:|chrome-devtools:|file:|chrome.google.com\/webstore/;
+
+  let discardAllTabs = () => {
+      tabs.query({}, tabsList => {
+          tabsList.forEach( tab => {
+              // if(tab.pinned || tab.active || tab.discarded) { return; }
+              // if(tab.url && specialUrls.test(tab.url)){ return; }
+              return (tab.active) ? 
+                0 : tabs.discard(tab.id);
+          } )
+      });
+  };
+
+  chrome.runtime.onStartup.addListener( discardAllTabs );
+
+})(chrome.tabs);
+
 const CURRENT_TAB_ID = 'currentTabId';
 const PREVIOUS_TAB_ID = 'previousTabId';
 const TEMPORARY_WHITELIST = 'temporaryWhitelist';
 
 const suspensionActiveIcon = '/img/icon19.png';
 const suspensionPausedIcon = '/img/icon19b.png';
-const debug = true;
+const debug = false;
 
+const LAZY_LOAD_TAB_THRESHOLDS = 1
 
 //initialise global state vars
 var chargingMode = false;
@@ -39,16 +62,6 @@ chrome.runtime.onInstalled.addListener(function() {
 //reset tabStates on extension load
 chrome.runtime.onStartup.addListener(function () {
   if (debug) { console.log('Extension started.'); }
-
-  // Standard Google Universal Analytics code
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-  ga('create', 'UA-89460956-1', 'auto');
-  ga('set', 'checkProtocolTask', function(){});
-  ga('require', 'displayfeatures');
-  ga('send', 'pageview', '/eventPage.html');
 
   chrome.alarms.clearAll(function () {
     localStorage.setItem(TEMPORARY_WHITELIST, []);
@@ -91,11 +104,20 @@ if (navigator.getBattery) {
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
 
   if (changeInfo.status === 'loading') {
+    if (false == tab.active) {
+      if(tab.openerTabId) {
+        chrome.tabs.query({active: true, currentWindow: true}, activeTabs => {
+          const activeTab = activeTabs[0]
+          if(activeTab && tab.index - activeTab.index > LAZY_LOAD_TAB_THRESHOLDS)
+            discardTab(tab)
+        })
+      }
+    }
     return;
   }
-  else if (isDiscarded(tab)) {
+  
+  if(isDiscarded(tab))
     return;
-  }
 
   if (debug) { console.log('Tab updated: ' + tabId + '. Status: ' + changeInfo.status); }
 
