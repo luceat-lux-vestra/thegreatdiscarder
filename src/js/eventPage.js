@@ -180,6 +180,27 @@ chrome.tabs.onActivated.addListener(function (activeInfo) {
   }
   localStorage.setItem(CURRENT_TAB_ID, tabId);
   localStorage.setItem(PREVIOUS_TAB_ID, lastTabId);
+
+  return chrome.tabs.query({active: false, currentWindow: true}, tabs => {
+    chrome.tabs.get(tabId, tab => {
+      tabs.filter(t => {
+        const delta = t.index - tab.index
+        return t.discarded && (delta > 0 && delta <= LAZY_LOAD_TAB_THRESHOLDS)
+        // if (t.discarded && (delta > 0 && delta <= LAZY_LOAD_TAB_THRESHOLDS))
+        //   return true
+        // else {
+        //   if(false === t.discarded && false === t.pinned) {
+        //     discardTab(t)
+        //     return false
+        //   }
+        // }
+      }).map(t => {
+        if(undefined !== t.openerTabId) {
+          chrome.tabs.reload(t.id)
+        }
+      })
+    })
+  })
 });
 
 
